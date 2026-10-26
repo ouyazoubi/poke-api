@@ -1,0 +1,30 @@
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://poke:poke@db:5432/poke
+      PORT: 3000
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: poke
+      POSTGRES_PASSWORD: poke
+      POSTGRES_DB: poke
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - poke_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poke -d poke"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  poke_data:
